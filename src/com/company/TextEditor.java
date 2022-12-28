@@ -2,21 +2,15 @@ package com.company;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.AbstractAction;
+import javax.swing.KeyStroke;
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 
 public class TextEditor implements ActionListener {
@@ -33,12 +27,24 @@ public class TextEditor implements ActionListener {
     private JMenuItem openMenuItem;
     private JMenuItem saveMenuItem;
     private JMenuItem saveAsMenuItem;
+    private JMenuItem newMenu;
     private JMenuItem copyMenuItem;
     private JMenuItem pasteMenuItem;
+    private JMenuItem undoMenuItem;
+    private JMenuItem savePageMenuItem;
     JMenuItem searchMenuItem;
     private File currentFile;
 
+    private String text;
+    private List<Memento> history = new ArrayList<>();
+    private int current;
+
     private TextEditor() {
+
+        this.text = "";
+        this.history = new ArrayList<>();
+        this.current = 0;
+
         // Set up the JFrame
         frame = new JFrame("Text Editor");
         frame.setSize(800, 600);
@@ -63,30 +69,51 @@ public class TextEditor implements ActionListener {
         saveAsMenuItem = new JMenuItem("Save As...");
         saveAsMenuItem.addActionListener(this);
         fileMenu.add(saveAsMenuItem);
+        newMenu = new JMenuItem("New Menu");
+        newMenu.addActionListener(this);
+        fileMenu.add(newMenu);
         menuBar.add(fileMenu);
+
 
         // Set up the Edit menu
         editMenu = new JMenu("Edit");
         searchMenu = new JMenu("Search");
         copyMenuItem = new JMenuItem("Copy");
-        searchMenuItem = new JMenuItem("Search");
-        searchMenuItem.addActionListener(this);
+
         copyMenuItem.addActionListener(this);
         editMenu.add(copyMenuItem);
         pasteMenuItem = new JMenuItem("Paste");
         pasteMenuItem.addActionListener(this);
         editMenu.add(pasteMenuItem);
+
+        undoMenuItem = new JMenuItem("Undo");
+        undoMenuItem.addActionListener(this);
+        editMenu.add(undoMenuItem);
+
+        savePageMenuItem = new JMenuItem("Save Page");
+        savePageMenuItem.addActionListener(this);
+        editMenu.add(savePageMenuItem);
+
+
+        // Set up the Search menu
+        searchMenuItem = new JMenuItem("Search");
+        searchMenuItem.addActionListener(this);
+        searchMenu.add(searchMenuItem);
+
         menuBar.add(editMenu);
         menuBar.add(searchMenu);
-        searchMenu.add(searchMenuItem);
 
         // Add the menu bar to the frame
         frame.setJMenuBar(menuBar);
 
 
-
         // Display the frame
         frame.setVisible(true);
+
+
+
+
+
     }
 
     // Singleton nesneyi çağırma
@@ -118,7 +145,8 @@ public class TextEditor implements ActionListener {
                     JOptionPane.showMessageDialog(frame, "Error reading file", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
-        } else if (e.getSource() == saveMenuItem) {
+        }
+        else if (e.getSource() == saveMenuItem) {
             if (currentFile == null) {
                 // If no file is currently open, show the Save As dialog
                 actionPerformed(new ActionEvent(saveAsMenuItem, 0, null));
@@ -130,7 +158,8 @@ public class TextEditor implements ActionListener {
                     JOptionPane.showMessageDialog(frame, "Error saving file", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
-        } else if (e.getSource() == saveAsMenuItem) {
+        }
+        else if (e.getSource() == saveAsMenuItem) {
             // Show the file chooser and get the selected file
             JFileChooser fileChooser = new JFileChooser();
             int result = fileChooser.showSaveDialog(frame);
@@ -145,7 +174,8 @@ public class TextEditor implements ActionListener {
                     JOptionPane.showMessageDialog(frame, "Error saving file", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
-        } else if (e.getSource() == copyMenuItem) {
+        }
+        else if (e.getSource() == copyMenuItem) {
             // Copy the selected text to the clipboard
             textArea.copy();
         }
@@ -159,6 +189,21 @@ public class TextEditor implements ActionListener {
                 search(word);
             }
         }
+        else if (e.getSource() == newMenu){
+            undo();
+        }
+        else if (e.getSource() == undoMenuItem){
+            undo();
+        }
+        else if (e.getSource() == savePageMenuItem){
+            setText();
+        }
+
+
+
+
+
+
     }
 
     public void search(String word) {
@@ -175,6 +220,33 @@ public class TextEditor implements ActionListener {
         } else {
             // If the word is not found, show an error message
             JOptionPane.showMessageDialog(frame, "Word not found", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void setText() {
+        history.add(current, new Memento(textArea.getText()));
+        current++;
+    }
+
+    public void undo() {
+        if (current > 0) {
+            current--;
+            text = history.get(current).getText();
+            textArea.setText(text);
+            System.out.println(history.get(current).getText());
+            System.out.println(history.get(current-1).getText());
+        }
+    }
+
+    private static class Memento {
+        private final String text;
+
+        public Memento(String text) {
+            this.text = text;
+        }
+
+        public String getText() {
+            return text;
         }
     }
 }
