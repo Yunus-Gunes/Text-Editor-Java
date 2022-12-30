@@ -1,5 +1,5 @@
 package com.company;
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
@@ -18,12 +18,20 @@ public class TextEditor implements ActionListener {
     // Singleton nesne
     private static TextEditor instance = null;
 
+    DarkTheme darkTheme = new DarkTheme();
+
+    LightTheme lightTheme = new LightTheme();
+
+
+
     private JFrame frame;
     private JTextArea textArea;
     private JMenuBar menuBar;
     private JMenu fileMenu;
     private JMenu editMenu;
     private JMenu searchMenu;
+
+    private JMenu themeMenu;
     private JMenuItem openMenuItem;
     private JMenuItem saveMenuItem;
     private JMenuItem saveAsMenuItem;
@@ -33,6 +41,10 @@ public class TextEditor implements ActionListener {
     private JMenuItem undoMenuItem;
     private JMenuItem savePageMenuItem;
     JMenuItem searchMenuItem;
+    JMenuItem darkMenuEdit;
+    JMenuItem lightMenuEdit;
+
+
     private File currentFile;
 
     private String text;
@@ -44,6 +56,7 @@ public class TextEditor implements ActionListener {
         this.text = "";
         this.history = new ArrayList<>();
         this.current = 0;
+
 
         // Set up the JFrame
         frame = new JFrame("Text Editor");
@@ -69,9 +82,6 @@ public class TextEditor implements ActionListener {
         saveAsMenuItem = new JMenuItem("Save As...");
         saveAsMenuItem.addActionListener(this);
         fileMenu.add(saveAsMenuItem);
-        newMenu = new JMenuItem("New Menu");
-        newMenu.addActionListener(this);
-        fileMenu.add(newMenu);
         menuBar.add(fileMenu);
 
 
@@ -103,13 +113,25 @@ public class TextEditor implements ActionListener {
         menuBar.add(editMenu);
         menuBar.add(searchMenu);
 
+        // Set up the Search menu
+        themeMenu = new JMenu("Theme");
+
+        darkMenuEdit = new JMenuItem("Dark");
+        darkMenuEdit.addActionListener(this);
+        themeMenu.add(darkMenuEdit);
+        lightMenuEdit = new JMenuItem("Light");
+        lightMenuEdit.addActionListener(this);
+        themeMenu.add(lightMenuEdit);
+
+        menuBar.add(themeMenu);
         // Add the menu bar to the frame
         frame.setJMenuBar(menuBar);
 
 
+
+
         // Display the frame
         frame.setVisible(true);
-
 
 
 
@@ -189,14 +211,18 @@ public class TextEditor implements ActionListener {
                 search(word);
             }
         }
-        else if (e.getSource() == newMenu){
-            undo();
-        }
         else if (e.getSource() == undoMenuItem){
             undo();
         }
         else if (e.getSource() == savePageMenuItem){
             setText();
+        }
+
+        else if (e.getSource() == darkMenuEdit){
+            darkTheme.applyTheme(this);
+        }
+        else if (e.getSource() == lightMenuEdit){
+            lightTheme.applyTheme(this);
         }
 
 
@@ -205,6 +231,7 @@ public class TextEditor implements ActionListener {
 
 
     }
+
 
     public void search(String word) {
         // Get the text from the text area
@@ -249,4 +276,47 @@ public class TextEditor implements ActionListener {
             return text;
         }
     }
+    interface Theme {
+        // Method to apply the theme to the text editor
+        void applyTheme(TextEditor editor);
+    }
+
+     public class DarkTheme implements Theme {
+        @Override
+        public void applyTheme(TextEditor editor) {
+            editor.setBackground(Color.DARK_GRAY);
+            editor.setForeground(Color.WHITE);
+        }
+    }
+
+    public void setBackground(Color color) {
+        textArea.setBackground(color);
+    }
+
+    public void setForeground(Color color) {
+        textArea.setForeground(color);
+    }
+
+
+    class LightTheme implements Theme {
+        @Override
+        public void applyTheme(TextEditor editor) {
+            editor.setBackground(Color.WHITE);
+            editor.setForeground(Color.BLACK);
+        }
+    }
+
+    class ThemeFactory {
+        public Theme createTheme(String themeName) {
+            if (themeName.equalsIgnoreCase("dark")) {
+                return new DarkTheme();
+            } else if (themeName.equalsIgnoreCase("light")) {
+                return new LightTheme();
+            } else {
+                return null;
+            }
+        }
+    }
+
+
 }
