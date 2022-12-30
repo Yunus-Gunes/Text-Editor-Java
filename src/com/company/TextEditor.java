@@ -1,5 +1,5 @@
 package com.company;
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
@@ -19,21 +19,28 @@ public class TextEditor implements ActionListener {
     // Singleton nesne
     private static TextEditor instance = null;
 
+    DarkTheme darkTheme = new DarkTheme();
+    LightTheme lightTheme = new LightTheme();
+
     private final JFrame frame;
     private final JTextArea textArea;
     private final JMenuBar menuBar;
     private final JMenu fileMenu;
     private final JMenu editMenu;
     private final JMenu searchMenu;
+    private final JMenu themeMenu;
+
     private final JMenuItem openMenuItem;
     private final JMenuItem saveMenuItem;
     private final JMenuItem saveAsMenuItem;
-    private final JMenuItem newMenu;
     private final JMenuItem copyMenuItem;
     private final JMenuItem pasteMenuItem;
     private final JMenuItem undoMenuItem;
     private final JMenuItem savePageMenuItem;
     private final JMenuItem searchMenuItem;
+    private final JMenuItem darkMenuEdit;
+    private final JMenuItem lightMenuEdit;
+
     private File currentFile;
 
     private String text;
@@ -70,25 +77,24 @@ public class TextEditor implements ActionListener {
         openMenuItem = new JMenuItem("Open");
         openMenuItem.addActionListener(this);
         fileMenu.add(openMenuItem);
+
         saveMenuItem = new JMenuItem("Save");
         saveMenuItem.addActionListener(this);
         fileMenu.add(saveMenuItem);
+
         saveAsMenuItem = new JMenuItem("Save As...");
         saveAsMenuItem.addActionListener(this);
         fileMenu.add(saveAsMenuItem);
-        newMenu = new JMenuItem("New Menu");
-        newMenu.addActionListener(this);
-        fileMenu.add(newMenu);
-        menuBar.add(fileMenu);
-
 
         // Set up the Edit menu
         editMenu = new JMenu("Edit");
         searchMenu = new JMenu("Search");
-        copyMenuItem = new JMenuItem("Copy");
+        themeMenu = new JMenu("Theme");
 
+        copyMenuItem = new JMenuItem("Copy");
         copyMenuItem.addActionListener(this);
         editMenu.add(copyMenuItem);
+
         pasteMenuItem = new JMenuItem("Paste");
         pasteMenuItem.addActionListener(this);
         editMenu.add(pasteMenuItem);
@@ -101,24 +107,35 @@ public class TextEditor implements ActionListener {
         savePageMenuItem.addActionListener(this);
         editMenu.add(savePageMenuItem);
 
-
         // Set up the Search menu
         searchMenuItem = new JMenuItem("Search");
         searchMenuItem.addActionListener(this);
         searchMenu.add(searchMenuItem);
 
+        darkMenuEdit = new JMenuItem("Dark");
+        darkMenuEdit.addActionListener(this);
+        themeMenu.add(darkMenuEdit);
+
+        lightMenuEdit = new JMenuItem("Light");
+        lightMenuEdit.addActionListener(this);
+        themeMenu.add(lightMenuEdit);
+
+        menuBar.add(fileMenu);
         menuBar.add(editMenu);
         menuBar.add(searchMenu);
+        menuBar.add(themeMenu);
+
+        // Add the menu bar to the frame
+        frame.setJMenuBar(menuBar);
 
         // Add the menu bar to the frame
         frame.setJMenuBar(menuBar);
 
         // Display the frame
         frame.setVisible(true);
-
     }
 
-    // Singleton nesneyi çağırma
+    // ------------- SINGLETON --------------------
     public static TextEditor getInstance() {
         if (instance == null) {
             instance = new TextEditor();
@@ -146,9 +163,6 @@ public class TextEditor implements ActionListener {
         else if (e.getSource() == searchMenuItem){
             searchCommand.execute();
         }
-        else if (e.getSource() == newMenu){
-            undo();
-        }
         else if (e.getSource() == undoMenuItem){
             undo();
         }
@@ -156,11 +170,12 @@ public class TextEditor implements ActionListener {
             setText();
         }
 
-
-
-
-
-
+        else if (e.getSource() == darkMenuEdit){
+            darkTheme.applyTheme(this);
+        }
+        else if (e.getSource() == lightMenuEdit){
+            lightTheme.applyTheme(this);
+        }
     }
 
 
@@ -169,20 +184,19 @@ public class TextEditor implements ActionListener {
         // Create an iterator for the text area
         TextAreaIterator iterator = new TextAreaIterator(textArea);
 
-        // Search for the word using the iterator
-        while (iterator.hasNext()) {
-            String next = iterator.next();
-            if (next.equals(word)) {
-                // If the word is found, select it and break out of the loop
-                textArea.setSelectionStart(iterator.getIndex() - word.length());
-                textArea.setSelectionEnd(iterator.getIndex());
-                break;
-            }
-        }
+        // Get the text from the text area
+        String text = textArea.getText();
 
-        if (!iterator.hasNext()) {
+        // Find the index of the first occurrence of the word
+        int index = text.indexOf(word);
+
+        if (index >= 0) {
+            // If the word is found, select it
+            textArea.setSelectionStart(index);
+            textArea.setSelectionEnd(index + word.length());
+        } else {
             // If the word is not found, show an error message
-            JOptionPane.showMessageDialog(frame, "Word not found", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "Kelime bulunamadı !!", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -352,6 +366,49 @@ public class TextEditor implements ActionListener {
                 } catch (IOException ex) {
                     JOptionPane.showMessageDialog(frame, "Error saving file", "Error", JOptionPane.ERROR_MESSAGE);
                 }
+            }
+        }
+    }
+
+    // -------------------- FACTORY ------------------------
+    interface Theme {
+        // Method to apply the theme to the text editor
+        void applyTheme(TextEditor editor);
+    }
+
+    public class DarkTheme implements Theme {
+        @Override
+        public void applyTheme(TextEditor editor) {
+            editor.setBackground(Color.DARK_GRAY);
+            editor.setForeground(Color.WHITE);
+        }
+    }
+
+    public void setBackground(Color color) {
+        textArea.setBackground(color);
+    }
+
+    public void setForeground(Color color) {
+        textArea.setForeground(color);
+    }
+
+
+    class LightTheme implements Theme {
+        @Override
+        public void applyTheme(TextEditor editor) {
+            editor.setBackground(Color.WHITE);
+            editor.setForeground(Color.BLACK);
+        }
+    }
+
+    class ThemeFactory {
+        public Theme createTheme(String themeName) {
+            if (themeName.equalsIgnoreCase("dark")) {
+                return new DarkTheme();
+            } else if (themeName.equalsIgnoreCase("light")) {
+                return new LightTheme();
+            } else {
+                return null;
             }
         }
     }
