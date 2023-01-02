@@ -12,6 +12,8 @@ import javax.swing.KeyStroke;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 
 public class TextEditor implements ActionListener {
@@ -21,6 +23,14 @@ public class TextEditor implements ActionListener {
 
     DarkTheme darkTheme = new DarkTheme();
     LightTheme lightTheme = new LightTheme();
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public String getText() {
+        return text;
+    }
 
     private final JFrame frame;
     private final JTextArea textArea;
@@ -290,7 +300,7 @@ public class TextEditor implements ActionListener {
         }
     }
 
-    private class OpenCommand extends Command {
+    class OpenCommand extends Command {
 
         private TextEditor editor;
 
@@ -410,6 +420,20 @@ public class TextEditor implements ActionListener {
             } else {
                 return null;
             }
+        }
+    }
+
+
+
+    public class TextEditorTest {
+        @Test
+        public void testSave() {
+            TextEditor editor = TextEditor.getInstance();
+            editor.setText("This is a test");
+            File file = new File("test.txt");
+            SaveCommand saveCommand = new SaveCommand(editor);
+            saveCommand.execute();
+            assertTrue(file.exists());
         }
     }
 
